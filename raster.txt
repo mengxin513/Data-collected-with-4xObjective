@@ -1,0 +1,5 @@
+Dataset Field_of_scan Movement_size Backlash_correction
+000 40000 1000 256
+001 50000 1000 256
+002 60000 2000 Off
+003 80000 2000 Off
