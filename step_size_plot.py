@@ -12,8 +12,8 @@ if __name__ == "__main__":
 
     microns_per_pixel = 4.25
     df = h5py.File("step_size.hdf5", mode = "r")
-    group1 = df["data_steps002"]
-    group2 = df["data_distance002"]
+    group1 = df["data_steps000"]
+    group2 = df["data_distance000"]
     dset1 = group1["data_steps00000"]
     dset2 = group2["data_distance00000"]
 

@@ -68,7 +68,7 @@ class Datafile():
             n += 1
         grouppath = group + "%03d" % n
         g = parent.create_group(grouppath)
-        g.attrs.create("timestamp", datetime.datetime.now().isoformat())  # Add timestamp attribute
+        g.attrs.create("timestamp", str(datetime.datetime.now().isoformat()))  # Add timestamp attribute
         if description is not None:
             g.attrs.create("Description", description)
         return g
