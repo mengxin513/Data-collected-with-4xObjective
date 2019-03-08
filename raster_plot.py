@@ -104,6 +104,11 @@ if __name__ == "__main__":
 
             transformed_stage_positions = np.dot(location_shifts, A)
 
+            numerator = abs(np.linalg.norm(pixel_shifts - transformed_stage_positions, axis = 1)) ** 2
+            denominator = abs(np.linalg.norm(pixel_shifts, axis = 1)) ** 2
+            error = np.mean(numerator / denominator)
+            print("Error in transformation matrix: {}".format(error))
+
             matplotlib.rcParams.update({'font.size': 12})
 
             plotting1((transformed_stage_positions[:, 0] - np.mean(transformed_stage_positions[:, 0])) * microns_per_pixel,
