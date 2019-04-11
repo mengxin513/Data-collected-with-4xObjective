@@ -28,7 +28,7 @@ if __name__ == "__main__":
             final_c = data["final_cam_position"]
             init_s = data["init_stage_position"]
             moved_s = data["moved_stage_position"]
-            diff[j, :] = final_c[:, 1:] - init_c[:, 1:]
+            diff[j, :] = (final_c[:, 1:] - init_c[:, 1:]) * microns_per_pixel
             move[j, :] = moved_s[:] - init_s[:]
         move[:, 0] = move[:, 0] * 0.00960
         move[:, 1] = 0
@@ -37,9 +37,13 @@ if __name__ == "__main__":
         error = np.sqrt(np.sum(diff**2, axis = 1))
         dist[i] = np.mean(abs_move, axis = 0)
         mean_error[i] = np.sqrt(np.mean(error**2))
+        print('For plot {}'.format(dist[i]))
+        print('Mean position difference is: {}'.format(mean_error[i]))
+        print('Minimum position difference is: {}'.format(min(error)))
+        print('Maximum position difference is: {}'.format(max(error)))
         matplotlib.rcParams.update({'font.size': 12})
         fig, ax = plt.subplots(1, 1)
-        ax.plot(diff[:, 0] * microns_per_pixel, diff[:, 1] * microns_per_pixel, "ro")
+        ax.plot(diff[:, 0], diff[:, 1], "ro")
         ax.set_aspect(1)
         xmin, xmax = ax.get_xlim()
         ymin, ymax = ax.get_ylim()
@@ -58,7 +62,7 @@ if __name__ == "__main__":
 
     fig2, ax2 = plt.subplots(1, 1)
 
-    ax2.semilogx(dist[:], mean_error[:] * microns_per_pixel, "r.-")
+    ax2.semilogx(dist[:], mean_error[:], "r.-")
 
     ax2.set_xlabel(r'Move Distance [$\mathrm{\mu m}$]')
     ax2.set_ylabel(r'Error [$\mathrm{\mu m}$]')

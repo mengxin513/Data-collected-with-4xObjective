@@ -36,7 +36,7 @@ def plotting2(x_data, y_data, x_label, y_label, group):
 
 if __name__ == "__main__":
 
-    with PdfPages("raster_standard.pdf") as pdf:
+    with PdfPages("raster_snake.pdf") as pdf:
 
         print ("Loading data...")
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         df = h5py.File("raster.hdf5", mode = "r")
         for i in range(len(df)):
             group = df["raster%03d" % i]
-            subgroup = group["standard_raster000"]
+            subgroup = group["snake_raster000"]
             n = len(subgroup)
             data = np.zeros([n, 6])
             for i in range(n):
@@ -57,10 +57,11 @@ if __name__ == "__main__":
             location_shifts = np.zeros([n, 3])
 
             for i in range(n):
-                pixel_shifts[i, 0:2] = data[i, 1:3]
+                pixel_shifts[i, 0] = data[i, 1] - np.mean(data[:, 1])
+                pixel_shifts[i, 1] = data[i, 2] - np.mean(data[:, 2])
                 pixel_shifts[i, 2] = 1
-                location_shifts[i, 0] = data[i, 3]
-                location_shifts[i, 1] = data[i, 5]
+                location_shifts[i, 0] = data[i, 3] - np.mean(data[:, 3])
+                location_shifts[i, 1] = data[i, 5] - np.mean(data[:, 5])
                 location_shifts[i, 2] = 1
                 
             # exclude points at the extreme of Y (the image analysis broke)
@@ -111,12 +112,23 @@ if __name__ == "__main__":
 
             matplotlib.rcParams.update({'font.size': 12})
 
-            plotting1((transformed_stage_positions[:, 0] - np.mean(transformed_stage_positions[:, 0])) * microns_per_pixel,
-                      (transformed_stage_positions[:, 1] - np.mean(transformed_stage_positions[:, 1])) * microns_per_pixel,
+            fig, ax = plt.subplots(1, 1)
+
+            ax.plot(transformed_stage_positions[:, 0] * microns_per_pixel, transformed_stage_positions[:, 1] * microns_per_pixel, 'r+')
+            ax.plot(pixel_shifts[:, 0] * microns_per_pixel,pixel_shifts[:, 1] * microns_per_pixel, 'b+')
+
+            plt.tight_layout()
+
+            pdf.savefig(fig)
+            plt.show()
+            plt.close(fig)
+
+            plotting1(transformed_stage_positions[:, 0] * microns_per_pixel,
+                      transformed_stage_positions[:, 1] * microns_per_pixel,
                       r"Transformed Stage X Position [$\mathrm{\mu m}$]", r"Transformed Stage Y Position [$\mathrm{\mu m}$]")
             for ia, na in enumerate(["X", "Y"]):
-                plotting1((pixel_shifts[:, ia] - np.mean(pixel_shifts[:, ia])) * microns_per_pixel,
-                          (transformed_stage_positions[:, ia] - np.mean(transformed_stage_positions[:, ia])) * microns_per_pixel,
+                plotting1(pixel_shifts[:, ia] * microns_per_pixel,
+                          transformed_stage_positions[:, ia] * microns_per_pixel,
                           "Camera " + na + r" Position [$\mathrm{\mu m}$]", "Transformed Stage " + na + r" Position [$\mathrm{\mu m}$]")
             #for ia, na in enumerate(["X", "Y"]):
             #    for ib, nb in enumerate(["X", "Y"]):
@@ -125,7 +137,7 @@ if __name__ == "__main__":
             #                  "Camera " + na + " Position [px]", "Error in " + nb + " [px]", group)
 
             fig1, ax1 = plt.subplots(1, 1)
-            ax1.plot((pixel_shifts[:, 0] - np.mean(pixel_shifts[:, 0])) / np.linalg.norm(A_x),
+            ax1.plot(pixel_shifts[:, 0] / np.linalg.norm(A_x),
                     (transformed_stage_positions[:, 0] - pixel_shifts[:, 0]) * microns_per_pixel, ".")
             ax1.set_xlabel(r"Camera X Position [$\mathrm{Steps}$]")
             ax1.set_ylabel(r"Error in X [$\mathrm{\mu m}$]")
@@ -136,7 +148,7 @@ if __name__ == "__main__":
             plt.close(fig1)
 
             fig2, ax2 = plt.subplots(1, 1)
-            ax2.plot((pixel_shifts[:, 0] - np.mean(pixel_shifts[:, 0])) / np.linalg.norm(A_x),
+            ax2.plot(pixel_shifts[:, 0] / np.linalg.norm(A_x),
                      (transformed_stage_positions[:, 0] - pixel_shifts[:, 0]) * microns_per_pixel, ".-")
             ax2.set_xlabel(r"Camera X Position [$\mathrm{Steps}$]")
             ax2.set_ylabel(r"Error in X [$\mathrm{\mu m}$]")
