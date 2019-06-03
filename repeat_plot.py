@@ -7,27 +7,27 @@ import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
 
 if __name__ == "__main__":
-    print ("Loading data...")
+    print ('Loading data...')
 
     microns_per_pixel = 4.25
-    df = h5py.File("repeat.hdf5", mode = "r")
+    df = h5py.File('repeat.hdf5', mode = 'r')
     group = list(df.values())[-1]
     n = len(group)
-    pdf = PdfPages("repeatability{}.pdf".format(group.name.replace("/","_")))
+    pdf = PdfPages('repeatability{}.pdf'.format(group.name.replace('/', '_')))
 
     dist = np.zeros(n)
     mean_error = np.zeros(n)
     for i in range(n):
-        dset = group["distance%03d" % i] #distances
+        dset = group['distance%03d' % i] #distances
         m = len(dset) - 2
         diff = np.zeros([m, 2])
         move = np.zeros([m, 3])
         for j in range(m):
-            data = dset["move%03d" % j] #moves
-            init_c = data["init_cam_position"]
-            final_c = data["final_cam_position"]
-            init_s = data["init_stage_position"]
-            moved_s = data["moved_stage_position"]
+            data = dset['move%03d' % j] #moves
+            init_c = data['init_cam_position']
+            final_c = data['final_cam_position']
+            init_s = data['init_stage_position']
+            moved_s = data['moved_stage_position']
             diff[j, :] = (final_c[:, 1:] - init_c[:, 1:]) * microns_per_pixel
             move[j, :] = moved_s[:] - init_s[:]
         move[:, 0] = move[:, 0] * 0.00960
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         print('Maximum position difference is: {}'.format(max(error)))
         matplotlib.rcParams.update({'font.size': 12})
         fig, ax = plt.subplots(1, 1)
-        ax.plot(diff[:, 0], diff[:, 1], "ro")
+        ax.plot(diff[:, 0], diff[:, 1], 'ro')
         ax.set_aspect(1)
         xmin, xmax = ax.get_xlim()
         ymin, ymax = ax.get_ylim()
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     fig2, ax2 = plt.subplots(1, 1)
 
-    ax2.semilogx(dist[:], mean_error[:], "r.-")
+    ax2.loglog(dist[4:], mean_error[4:], 'r.')
 
     ax2.set_xlabel(r'Move Distance [$\mathrm{\mu m}$]')
     ax2.set_ylabel(r'Error [$\mathrm{\mu m}$]')

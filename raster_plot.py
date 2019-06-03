@@ -7,7 +7,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 def plotting1(x_data, y_data, x_label, y_label):
     fig, ax = plt.subplots(1, 1)
-    ax.plot(x_data, y_data, "r+")
+    ax.plot(x_data, y_data, 'r.')
     ax.set_aspect(1)
     xmin, xmax = ax.get_xlim()
     ymin, ymax = ax.get_ylim()
@@ -24,10 +24,9 @@ def plotting1(x_data, y_data, x_label, y_label):
 
 def plotting2(x_data, y_data, x_label, y_label, group):
     fig, ax = plt.subplots(1, 1)
-    ax.plot(x_data, y_data, "+-")
+    ax.plot(x_data, y_data, '.-')
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
-    fig.suptitle(group.name[1:])
 
     plt.tight_layout()
 
@@ -38,19 +37,19 @@ if __name__ == "__main__":
 
     with PdfPages("raster_snake.pdf") as pdf:
 
-        print ("Loading data...")
+        print ('Loading data...')
 
         microns_per_pixel = 4.25
-        df = h5py.File("raster.hdf5", mode = "r")
+        df = h5py.File('raster.hdf5', mode = 'r')
         for i in range(len(df)):
-            group = df["raster%03d" % i]
-            subgroup = group["snake_raster000"]
+            group = df['raster%03d' % i]
+            subgroup = group['snake_raster000']
             n = len(subgroup)
             data = np.zeros([n, 6])
             for i in range(n):
-                dset = subgroup["data%03d" % i]
-                data[i, 0:3] = dset["cam_position"]
-                data[i, 3:6] = dset["stage_position"]
+                dset = subgroup['data%03d' % i]
+                data[i, 0:3] = dset['cam_position']
+                data[i, 3:6] = dset['stage_position']
 
             t = data[:, 0]
             pixel_shifts = np.zeros([n, 3])
@@ -92,92 +91,54 @@ if __name__ == "__main__":
 
             #dot products of A with x and y unit vectors to find x and y components of A
             A_x = np.dot(x, A) #the displacement in px corrosponding to 1 step in x
-            print ("Step size along X in microns: {}".format(np.linalg.norm(A_x) * microns_per_pixel))
+            print ('Step size along X in microns: {}'.format(np.linalg.norm(A_x) * microns_per_pixel))
             A_y = np.dot(y, A)
-            print ("Step size along Y in microns: {}".format(np.linalg.norm(A_y) * microns_per_pixel))
+            print ('Step size along Y in microns: {}'.format(np.linalg.norm(A_y) * microns_per_pixel))
 
             #uses standard dot product formula to find angle between A_x and A_y
             dotproduct = np.dot(A_x, A_y)
             cosa = dotproduct / (np.linalg.norm(A_x) * np.linalg.norm(A_y))
             angle = np.arccos(cosa)
             angle = angle * 180 / np.pi
-            print ("Angle between axis in degrees: {}".format(angle))
+            print ('Angle between axis in degrees: {}'.format(angle))
 
             transformed_stage_positions = np.dot(location_shifts, A)
 
             numerator = abs(np.linalg.norm(pixel_shifts - transformed_stage_positions, axis = 1)) ** 2
             denominator = abs(np.linalg.norm(pixel_shifts, axis = 1)) ** 2
             error = np.mean(numerator / denominator)
-            print("Error in transformation matrix: {}".format(error))
+            print('Error in transformation matrix: {}'.format(error))
 
             matplotlib.rcParams.update({'font.size': 12})
 
-            fig, ax = plt.subplots(1, 1)
-
-            ax.plot(transformed_stage_positions[:, 0] * microns_per_pixel, transformed_stage_positions[:, 1] * microns_per_pixel, 'r+')
-            ax.plot(pixel_shifts[:, 0] * microns_per_pixel,pixel_shifts[:, 1] * microns_per_pixel, 'b+')
-
-            plt.tight_layout()
-
-            pdf.savefig(fig)
-            plt.show()
-            plt.close(fig)
-
             plotting1(transformed_stage_positions[:, 0] * microns_per_pixel,
                       transformed_stage_positions[:, 1] * microns_per_pixel,
-                      r"Transformed Stage X Position [$\mathrm{\mu m}$]", r"Transformed Stage Y Position [$\mathrm{\mu m}$]")
-            for ia, na in enumerate(["X", "Y"]):
+                      r'Transformed Stage X Position [$\mathrm{\mu m}$]', r'Transformed Stage Y Position [$\mathrm{\mu m}$]')
+
+            for ia, na in enumerate(['X', 'Y']):
                 plotting1(pixel_shifts[:, ia] * microns_per_pixel,
                           transformed_stage_positions[:, ia] * microns_per_pixel,
-                          "Camera " + na + r" Position [$\mathrm{\mu m}$]", "Transformed Stage " + na + r" Position [$\mathrm{\mu m}$]")
-            #for ia, na in enumerate(["X", "Y"]):
-            #    for ib, nb in enumerate(["X", "Y"]):
-            #        plotting2(pixel_shifts[:, ia] - np.mean(pixel_shifts[:, ia]),
-            #                  transformed_stage_positions[:, ib] - pixel_shifts[:, ib],
-            #                  "Camera " + na + " Position [px]", "Error in " + nb + " [px]", group)
+                          'Camera ' + na + r' Position [$\mathrm{\mu m}$]', 'Transformed Stage ' + na + r' Position [$\mathrm{\mu m}$]')
+
+            for ia, na in enumerate(['X', 'Y']):
+                for ib, nb in enumerate(['X', 'Y']):
+                    if na == 'X':
+                        unit_length = np.linalg.norm(A_x)
+                    elif na == 'Y':
+                        unit_length = np.linalg.norm(A_y)
+                    plotting2(pixel_shifts[:, ia] / unit_length,
+                              transformed_stage_positions[:, ib] - pixel_shifts[:, ib],
+                              'Camera ' + na + r' Position [$\mathrm{Steps}$]', 'Error in ' + nb + ' [px]', group)
 
             fig1, ax1 = plt.subplots(1, 1)
-            ax1.plot(pixel_shifts[:, 0] / np.linalg.norm(A_x),
-                    (transformed_stage_positions[:, 0] - pixel_shifts[:, 0]) * microns_per_pixel, ".")
-            ax1.set_xlabel(r"Camera X Position [$\mathrm{Steps}$]")
-            ax1.set_ylabel(r"Error in X [$\mathrm{\mu m}$]")
-
-            plt.tight_layout()
+            graph = ax1.quiver(location_shifts[:, 0] * 0.0096, location_shifts[:, 1] * 0.00772,
+                              (transformed_stage_positions[:, 0] - pixel_shifts[:, 0]) * microns_per_pixel,
+                              (transformed_stage_positions[:, 1] - pixel_shifts[:, 1]) * microns_per_pixel)
+            legend = ax1.quiverkey(graph, X = 0.3, Y = 1.1, U = 10, label = r'10 $\mathrm{\mu m}$', labelpos = 'E')
+            ax1.set_xlabel(r'Stage X Coordinate [$\mathrm{\mu m}$]')
+            ax1.set_ylabel(r'Stage Y Coordinate [$\mathrm{\mu m}$]')
 
             pdf.savefig(fig1)
             plt.close(fig1)
-
-            fig2, ax2 = plt.subplots(1, 1)
-            ax2.plot(pixel_shifts[:, 0] / np.linalg.norm(A_x),
-                     (transformed_stage_positions[:, 0] - pixel_shifts[:, 0]) * microns_per_pixel, ".-")
-            ax2.set_xlabel(r"Camera X Position [$\mathrm{Steps}$]")
-            ax2.set_ylabel(r"Error in X [$\mathrm{\mu m}$]")
-
-            plt.tight_layout()
-
-            pdf.savefig(fig2)
-            plt.close(fig2)
-
-            fig3, ax3 = plt.subplots(1, 1)
-            ax3.plot((transformed_stage_positions[:, 0] - pixel_shifts[:, 0]) * microns_per_pixel,
-                     (transformed_stage_positions[:, 1] - pixel_shifts[:, 1]) * microns_per_pixel, "r.")
-
-            ax3.set_aspect(1)
-            xmin, xmax = ax3.get_xlim()
-            ymin, ymax = ax3.get_ylim()
-            r = max(abs(xmin), abs(ymin), abs(xmax), abs(ymax)) * 1.1
-            ax3.set_xlim(-r, r)
-            ax3.set_ylim(-r, r)
-            ax3.spines['left'].set_position('zero')
-            ax3.spines['right'].set_color('none')
-            ax3.spines['bottom'].set_position('zero')
-            ax3.spines['top'].set_color('none')
-            ax3.set_xlabel(r"Error in X [$\mathrm{\mu m}$]", horizontalalignment = 'right', x = 1.0)
-            ax3.set_ylabel(r"Error in Y [$\mathrm{\mu m}$]", horizontalalignment = 'right', y = 1.0)
-
-            plt.tight_layout()
-
-            pdf.savefig(fig3)
-            plt.close(fig3)
             
     df.close()

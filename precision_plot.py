@@ -8,11 +8,11 @@ from matplotlib.backends.backend_pdf import PdfPages
 import math
 
 if __name__ == "__main__":
-    print ("Loading data...")
+    print ('Loading data...')
 
     # Loads data from the HDF5 file
-    df = h5py.File("precision.hdf5", mode = "r")
-    with PdfPages("precision_all.pdf") as pdf:
+    df = h5py.File('precision.hdf5', mode = 'r')
+    with PdfPages('precision_all.pdf') as pdf:
         for group in df.values():
             dset = list(group.values())[-1]
             n = len(dset)
@@ -43,11 +43,11 @@ if __name__ == "__main__":
 
             fig1, ax1 = plt.subplots(1, 1)
 
-            ax1.plot(t1, x1, "r-", alpha = 0.5)
-            line1, = ax1.plot(t2, x2, "r-")
+            ax1.plot(t1, x1, 'r-', alpha = 0.5)
+            line1, = ax1.plot(t2, x2, 'r-')
             ax2 = ax1.twinx()
-            ax2.plot(t1, y1, "b-", alpha = 0.5)
-            line2, = ax2.plot(t2, y2, "b-")
+            ax2.plot(t1, y1, 'b-', alpha = 0.5)
+            line2, = ax2.plot(t2, y2, 'b-')
             
             # Make the scale the same for X and Y (so it's obvious which is moving)
             xmin, xmax = ax1.get_ylim()
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
             fig2, ax3 = plt.subplots(1, 1)
 
-            ax3.plot(x1, y1, ".-")
+            ax3.plot(x1, y1, '.')
             ax3.set_aspect(1)
 
             #plot the XY motion, make the limits equal
